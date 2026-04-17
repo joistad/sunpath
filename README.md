@@ -1,11 +1,17 @@
-# Sunrise & Sunset — Year View
+# Sunpath
 
-An interactive, zero-dependency web app that visualises sunrise, sunset, solar noon, and civil twilight for every day of the year, anywhere on Earth.
+A year of sunrise & sunset, anywhere on Earth.
 
-- 🌍 **Works for any location** — use your browser's geolocation or search any city/place via OpenStreetMap
-- 🕒 **Timezone-aware** — looks up the correct IANA zone (including DST rules) for the selected coordinates
+### 👉 [Open the live app](https://joistad.github.io/sunpath/)
+
+An interactive, zero-dependency web app that visualises sunrise, sunset, solar noon, and civil twilight for every day of the year, for any location on the planet.
+
+## Features
+
+- 🌍 **Works anywhere** — use your browser's geolocation, or search any city or place
+- 🕒 **Timezone-aware** — correct IANA zone (including DST rules) for the selected coordinates
 - 🌓 **Polar day / polar night** rendered correctly above the Arctic and Antarctic circles
-- ☀️ / 🌙 **Light and dark modes** that follow your system preference
+- ☀️ / 🌙 **Light and dark mode** following your system preference
 - 📊 **Two views** — full clock chart of sunrise/sunset, or a daylight-hours length curve
 - ℹ️ **Built-in explainers** for every term (civil twilight, solar noon, etc.)
 
