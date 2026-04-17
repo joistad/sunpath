@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sunrise & Sunset — Year View</title>
+<style>
+  :root, [data-theme="dark"]{
+    --ink:#e8ecff;
+    --muted:#93a0c8;
+    --grid:rgba(255,255,255,.08);
+    --axis:rgba(255,255,255,.35);
+    --card-bg1:rgba(255,255,255,.04);
+    --card-bg2:rgba(255,255,255,.02);
+    --card-border:rgba(255,255,255,.08);
+    --card-shadow:0 20px 60px rgba(0,0,0,.35);
+    --tip-bg:rgba(10,14,30,.96);
+    --tip-border:rgba(255,255,255,.12);
+    --tip-shadow:0 10px 30px rgba(0,0,0,.4);
+    --pill-bg:rgba(124,192,255,.15);
+    --pill-ink:#bcd9ff;
+    --stat-bg:rgba(255,255,255,.03);
+    --stat-border:rgba(255,255,255,.06);
+    --btn-bg:rgba(255,255,255,.06);
+    --btn-border:rgba(255,255,255,.12);
+    --btn-active-bg:rgba(124,192,255,.2);
+    --btn-active-border:rgba(124,192,255,.5);
+    --input-bg:rgba(255,255,255,.05);
+    --input-border:rgba(255,255,255,.12);
+    --body-bg:
+      radial-gradient(1200px 700px at 70% -10%, #1a2455 0%, transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, #2a1840 0%, transparent 55%),
+      linear-gradient(180deg,#070b1c,#0b1226);
+    --night-fill:#1a2244;
+    --twilight-fill:#3d4a8f;
+    --day-stop1:#ffd98a;
+    --day-stop2:#ffb347;
+    --day-stop3:#ff8a5b;
+    --sunrise-color:#ff8a5b;
+    --sunset-color:#d65db1;
+    --noon-color:#ffd166;
+    --hover-stroke:#fff;
+    --marker-fill:#fff;
+    --accent:#7cc0ff;
+  }
+  [data-theme="light"]{
+    --ink:#1a2234;
+    --muted:#5b6784;
+    --grid:rgba(30,41,70,.09);
+    --axis:rgba(30,41,70,.45);
+    --card-bg1:rgba(255,255,255,.85);
+    --card-bg2:rgba(255,255,255,.65);
+    --card-border:rgba(30,41,70,.10);
+    --card-shadow:0 20px 60px rgba(90,110,160,.18);
+    --tip-bg:rgba(255,255,255,.98);
+    --tip-border:rgba(30,41,70,.12);
+    --tip-shadow:0 10px 30px rgba(90,110,160,.25);
+    --pill-bg:rgba(30,90,180,.10);
+    --pill-ink:#1f57b8;
+    --stat-bg:rgba(255,255,255,.7);
+    --stat-border:rgba(30,41,70,.08);
+    --btn-bg:rgba(255,255,255,.8);
+    --btn-border:rgba(30,41,70,.14);
+    --btn-active-bg:rgba(30,90,180,.12);
+    --btn-active-border:rgba(30,90,180,.45);
+    --input-bg:#fff;
+    --input-border:rgba(30,41,70,.18);
+    --body-bg:
+      radial-gradient(1200px 700px at 70% -10%, #e5ecff 0%, transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, #ffe8d6 0%, transparent 55%),
+      linear-gradient(180deg,#f6f8ff,#eef2ff);
+    --night-fill:#c9d3ee;
+    --twilight-fill:#9fb0d8;
+    --day-stop1:#ffe7a8;
+    --day-stop2:#ffb347;
+    --day-stop3:#ff8a5b;
+    --sunrise-color:#e06a3a;
+    --sunset-color:#b23b85;
+    --noon-color:#d9a300;
+    --hover-stroke:#1a2234;
+    --marker-fill:#1a2234;
+    --accent:#2a6bd1;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--body-bg);
+    color:var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Inter, Roboto, "Helvetica Neue", sans-serif;
+    min-height:100vh;
+    transition: background .3s ease, color .3s ease;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 60px}
+  header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+  h1{font-size:28px;margin:0 0 4px;font-weight:700;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:14px}
+  .sub b{color:var(--ink);font-weight:600}
+  .card{
+    background:linear-gradient(180deg, var(--card-bg1), var(--card-bg2));
+    border:1px solid var(--card-border);
+    border-radius:16px;
+    padding:18px;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(6px);
+  }
+  .card + .card{margin-top:14px}
+
+  /* Location bar */
+  .locbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .locbar .field{position:relative;flex:1 1 320px;min-width:220px}
+  .locbar input{
+    width:100%;padding:10px 12px 10px 36px;border-radius:10px;
+    background:var(--input-bg);border:1px solid var(--input-border);
+    color:var(--ink);font-size:14px;outline:none;
+    transition:border-color .15s;
+  }
+  .locbar input:focus{border-color:var(--accent)}
+  .locbar .pin{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
+  .suggestions{
+    position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:20;
+    background:var(--tip-bg);border:1px solid var(--tip-border);border-radius:10px;
+    box-shadow:var(--tip-shadow);max-height:260px;overflow-y:auto;
+    display:none;
+  }
+  .suggestions.open{display:block}
+  .suggestions .item{padding:8px 12px;font-size:13.5px;cursor:pointer;border-bottom:1px solid var(--card-border)}
+  .suggestions .item:last-child{border-bottom:none}
+  .suggestions .item:hover, .suggestions .item.active{background:var(--btn-active-bg)}
+  .suggestions .item small{color:var(--muted);display:block;font-size:11.5px;margin-top:2px}
+  .status{color:var(--muted);font-size:12.5px;min-height:16px}
+  .status.err{color:#ff8a8a}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
+  .sw{display:inline-block;width:14px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px}
+  .sw.line{height:0;border-top:2px solid currentColor;border-radius:0;width:18px;vertical-align:3px}
+  .sw.dash{height:0;border-top:2px dashed currentColor;border-radius:0;width:18px;vertical-align:3px}
+
+  .chart-wrap{position:relative;width:100%}
+  svg{width:100%;height:auto;display:block;touch-action:none}
+
+  .tip{
+    position:absolute;pointer-events:none;min-width:210px;
+    background:var(--tip-bg);border:1px solid var(--tip-border);
+    border-radius:12px;padding:10px 12px;font-size:12.5px;color:var(--ink);
+    box-shadow:var(--tip-shadow);
+    transform:translate(-50%,-110%);opacity:0;transition:opacity .12s;
+    white-space:nowrap;
+  }
+  .tip h4{margin:0 0 6px;font-size:13px}
+  .tip .row{display:flex;justify-content:space-between;gap:14px;color:var(--muted)}
+  .tip .row b{color:var(--ink);font-weight:600}
+  .tip .pill{display:inline-block;background:var(--pill-bg);color:var(--pill-ink);border-radius:999px;padding:2px 8px;font-size:11px;margin-left:6px}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px}
+  .stat{background:var(--stat-bg);border:1px solid var(--stat-border);border-radius:12px;padding:10px 12px}
+  .stat .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  .stat .v{font-size:16px;font-weight:600;margin-top:2px}
+
+  footer{color:var(--muted);font-size:12px;margin-top:16px;text-align:center}
+
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .btn{background:var(--btn-bg);border:1px solid var(--btn-border);color:var(--ink);
+       padding:7px 12px;border-radius:10px;font-size:12.5px;cursor:pointer;
+       transition:background .2s,border-color .2s;
+       display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{border-color:var(--accent)}
+  .btn.active{background:var(--btn-active-bg);border-color:var(--btn-active-border)}
+  .btn svg{width:15px;height:15px}
+  .btn.icon-only{padding:7px 9px}
+
+  /* Info popovers */
+  .info{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:16px;height:16px;border-radius:50%;
+    background:var(--btn-bg);border:1px solid var(--btn-border);
+    color:var(--muted);font-size:10px;font-weight:700;cursor:help;
+    margin-left:6px;vertical-align:1px;position:relative;
+    font-family:Georgia,serif;font-style:italic;
+  }
+  .info:hover{color:var(--ink);border-color:var(--accent)}
+  .info[data-tip]:hover::after, .info[data-tip]:focus::after{
+    content:attr(data-tip);
+    position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+    background:var(--tip-bg);border:1px solid var(--tip-border);
+    border-radius:10px;padding:8px 10px;font-size:12px;font-style:normal;font-weight:400;
+    color:var(--ink);width:240px;line-height:1.4;
+    box-shadow:var(--tip-shadow);white-space:normal;text-align:left;
+    z-index:30;pointer-events:none;
+  }
+
+  .polar-note{
+    margin-top:10px;padding:8px 12px;border-radius:10px;
+    background:var(--pill-bg);color:var(--pill-ink);font-size:12.5px;
+    display:none;
+  }
+  .polar-note.show{display:block}
+
+  @media (max-width:640px){
+    h1{font-size:22px}
+    .wrap{padding:18px 14px 40px}
+    .card{padding:14px}
+    header{gap:10px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Sunrise & Sunset — Year View</h1>
+      <div class="sub" id="locSub">Loading your location…</div>
+    </div>
+    <div class="controls">
+      <button class="btn active" data-mode="clock">
+        Clock view
+        <span class="info" tabindex="0" data-tip="Shows the exact local clock time of sunrise, sunset, and solar noon for each day of the year. The glowing band is when the sun is above the horizon.">i</span>
+      </button>
+      <button class="btn" data-mode="daylight">
+        Daylight hours
+        <span class="info" tabindex="0" data-tip="Shows only the length of each day — how many hours and minutes of sunlight you get — as a single curve across the year.">i</span>
+      </button>
+      <button class="btn theme-toggle icon-only" id="themeBtn" title="Toggle light/dark" aria-label="Toggle theme"></button>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="locbar">
+      <div class="field">
+        <svg class="pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <input id="locInput" type="text" placeholder="Search a city or place…" autocomplete="off" spellcheck="false">
+        <div class="suggestions" id="suggestions"></div>
+      </div>
+      <button class="btn" id="geoBtn" title="Use my current location">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+        Use my location
+      </button>
+      <button class="btn" id="yearDown" title="Previous year">‹</button>
+      <span style="font-weight:600;min-width:48px;text-align:center" id="yearLabel">2026</span>
+      <button class="btn" id="yearUp" title="Next year">›</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="card">
+    <div class="chart-wrap" id="chartWrap">
+      <svg id="chart" viewBox="0 0 1100 520" preserveAspectRatio="none"></svg>
+      <div class="tip" id="tip"></div>
+    </div>
+
+    <div class="legend" id="legend">
+      <span><span class="sw" id="sw-day"></span>Daylight
+        <span class="info" tabindex="0" data-tip="The period between sunrise and sunset, when the sun is above the horizon.">i</span>
+      </span>
+      <span><span class="sw" id="sw-tw"></span>Civil twilight
+        <span class="info" tabindex="0" data-tip="The ~30 minutes before sunrise and after sunset when the sun is just below the horizon (0° to 6° below). Sky is bright enough to see outside without artificial light.">i</span>
+      </span>
+      <span><span class="sw" id="sw-night"></span>Night
+        <span class="info" tabindex="0" data-tip="When the sun is more than 6° below the horizon — it's dark outside.">i</span>
+      </span>
+      <span id="sw-sr-wrap"><span class="sw line"></span><span style="color:var(--muted)">Sunrise</span>
+        <span class="info" tabindex="0" data-tip="The moment the top edge of the sun first appears above the horizon.">i</span>
+      </span>
+      <span id="sw-ss-wrap"><span class="sw line"></span><span style="color:var(--muted)">Sunset</span>
+        <span class="info" tabindex="0" data-tip="The moment the top edge of the sun disappears below the horizon.">i</span>
+      </span>
+      <span id="sw-noon-wrap"><span class="sw dash"></span><span style="color:var(--muted)">Solar noon</span>
+        <span class="info" tabindex="0" data-tip="When the sun is highest in the sky — exactly midway between sunrise and sunset. Usually a bit offset from 12:00 clock time because of your longitude and the equation of time.">i</span>
+      </span>
+    </div>
+
+    <div class="polar-note" id="polarNote"></div>
+
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <footer>
+    <div>Positions computed with the NOAA solar algorithm · Location search by <a href="https://www.openstreetmap.org/copyright" style="color:var(--muted)">OpenStreetMap / Nominatim</a></div>
+    <div style="margin-top:6px">
+      Made by <a href="https://github.com/joistad" style="color:var(--ink);text-decoration:none;border-bottom:1px dotted var(--muted)" target="_blank" rel="noopener">Jon H. Øistad</a>
+      · <a href="https://github.com/joistad/sunrise-sunset-year" style="color:var(--muted)" target="_blank" rel="noopener">Source on GitHub</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* =========================================================================
+   SOLAR CALCULATIONS (NOAA algorithm, ported from Python)
+   Returns local decimal hours for a given date/lat/lon/tz-offset.
+   ========================================================================= */
+function julianDay(date){
+  let y=date.getFullYear(), m=date.getMonth()+1, d=date.getDate();
+  if(m<=2){ y-=1; m+=12; }
+  const A=Math.floor(y/100);
+  const B=2 - A + Math.floor(A/4);
+  return Math.floor(365.25*(y+4716)) + Math.floor(30.6001*(m+1)) + d + B - 1524.5;
+}
+
+function solarEvent(date, lat, lon, event){
+  const JD = julianDay(date);
+  const T = (JD - 2451545.0) / 36525.0;
+  const L0 = ((280.46646 + T*(36000.76983 + T*0.0003032)) % 360 + 360) % 360;
+  const M  = 357.52911 + T*(35999.05029 - 0.0001537*T);
+  const e  = 0.016708634 - T*(0.000042037 + 0.0000001267*T);
+  const Mr = M*Math.PI/180;
+  const C  = Math.sin(Mr)*(1.914602 - T*(0.004817 + 0.000014*T))
+           + Math.sin(2*Mr)*(0.019993 - 0.000101*T)
+           + Math.sin(3*Mr)*0.000289;
+  const trueLong = L0 + C;
+  const omega = 125.04 - 1934.136*T;
+  const lam = trueLong - 0.00569 - 0.00478*Math.sin(omega*Math.PI/180);
+  const seconds = 21.448 - T*(46.8150 + T*(0.00059 - T*0.001813));
+  const eps0 = 23 + (26 + seconds/60)/60;
+  const eps = eps0 + 0.00256*Math.cos(omega*Math.PI/180);
+  const decl = Math.asin(Math.sin(eps*Math.PI/180)*Math.sin(lam*Math.PI/180))*180/Math.PI;
+  const y_ = Math.pow(Math.tan(eps/2*Math.PI/180), 2);
+  const eot = 4*(180/Math.PI)*(
+    y_*Math.sin(2*L0*Math.PI/180)
+    - 2*e*Math.sin(Mr)
+    + 4*e*y_*Math.sin(Mr)*Math.cos(2*L0*Math.PI/180)
+    - 0.5*y_*y_*Math.sin(4*L0*Math.PI/180)
+    - 1.25*e*e*Math.sin(2*Mr)
+  );
+
+  const solarNoonUT = 720 - 4*lon - eot; // minutes UTC
+
+  let h;
+  if(event==="sunrise"||event==="sunset") h = -0.833;
+  else if(event==="civil_dawn"||event==="civil_dusk") h = -6;
+  else if(event==="solar_noon") return solarNoonUT/60;
+  else throw new Error("bad event");
+
+  const latR=lat*Math.PI/180, decR=decl*Math.PI/180;
+  const cosHA = (Math.sin(h*Math.PI/180) - Math.sin(latR)*Math.sin(decR))
+              / (Math.cos(latR)*Math.cos(decR));
+  if(cosHA > 1)  return { polar: "night" };   // sun never rises
+  if(cosHA < -1) return { polar: "day" };     // sun never sets
+  const ha = Math.acos(cosHA)*180/Math.PI;
+  const ut = (event==="sunrise"||event==="civil_dawn")
+             ? solarNoonUT - 4*ha
+             : solarNoonUT + 4*ha;
+  return ut/60; // UTC decimal hours
+}
+
+/* Local time offset (hours) for a given date in a given IANA timezone.
+   Handles DST automatically. Returns e.g. 2 for Europe/Oslo in summer. */
+function tzOffsetHours(date, tz){
+  // Use Intl to format the date in tz and compare with the UTC fields.
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz, hour12: false,
+    year:"numeric",month:"2-digit",day:"2-digit",
+    hour:"2-digit",minute:"2-digit",second:"2-digit"
+  });
+  const parts = Object.fromEntries(dtf.formatToParts(date).filter(p=>p.type!=="literal").map(p=>[p.type,p.value]));
+  // Construct a UTC "as-if-local" date from those parts.
+  const asUTC = Date.UTC(
+    parseInt(parts.year),
+    parseInt(parts.month)-1,
+    parseInt(parts.day),
+    parts.hour==="24"?0:parseInt(parts.hour),
+    parseInt(parts.minute),
+    parseInt(parts.second)
+  );
+  return (asUTC - date.getTime()) / 3600000;
+}
+
+function toLocal(utHours, date, tz){
+  if(utHours===null || utHours===undefined) return null;
+  if(typeof utHours==="object" && utHours.polar) return utHours;
+  const off = tzOffsetHours(date, tz);
+  let v = utHours + off;
+  v = ((v % 24) + 24) % 24;
+  return v;
+}
+
+function computeYear(year, lat, lon, tz){
+  const days=[];
+  const start=new Date(Date.UTC(year,0,1));
+  const daysInYear = ((year%4===0 && year%100!==0) || year%400===0) ? 366 : 365;
+  for(let i=0;i<daysInYear;i++){
+    const d=new Date(Date.UTC(year,0,1+i));
+    const sr=solarEvent(d,lat,lon,"sunrise");
+    const ss=solarEvent(d,lat,lon,"sunset");
+    const noon=solarEvent(d,lat,lon,"solar_noon");
+    const cd=solarEvent(d,lat,lon,"civil_dawn");
+    const cdu=solarEvent(d,lat,lon,"civil_dusk");
+    const srL=toLocal(sr,d,tz), ssL=toLocal(ss,d,tz);
+    let daylight=null;
+    let polar=null;
+    if(typeof srL==="object" && srL && srL.polar){ polar=srL.polar; daylight = srL.polar==="day"?24:0; }
+    else if(typeof ssL==="object" && ssL && ssL.polar){ polar=ssL.polar; daylight = ssL.polar==="day"?24:0; }
+    else if(typeof sr==="number" && typeof ss==="number"){
+      daylight = ss-sr;
+    }
+    // DST check: compare today's offset with Jan 1's (DST is the one > std by ~1h)
+    const off = tzOffsetHours(d, tz);
+    days.push({
+      date: d.toISOString().slice(0,10),
+      sunrise: srL, sunset: ssL,
+      noon: toLocal(noon,d,tz),
+      civil_dawn: toLocal(cd,d,tz),
+      civil_dusk: toLocal(cdu,d,tz),
+      daylight, polar, tzOffset: off,
+    });
+  }
+  // Mark DST: day whose offset > min offset of the year
+  const minOff = Math.min(...days.map(d=>d.tzOffset));
+  days.forEach(d=>{ d.dst = d.tzOffset > minOff; });
+  return days;
+}
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+const STATE = {
+  lat: 59.9139, lon: 10.7522,
+  label: "Oslo, Norway",
+  tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+  year: new Date().getFullYear(),
+  mode: "clock",
+  days: null,
+};
+
+/* =========================================================================
+   THEME
+   ========================================================================= */
+const SUN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+const MOON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function applyTheme(theme){
+  document.documentElement.setAttribute("data-theme",theme);
+  const btn=document.getElementById("themeBtn");
+  btn.innerHTML = theme==="light" ? MOON_SVG : SUN_SVG;
+  btn.title = theme==="light" ? "Switch to dark mode" : "Switch to light mode";
+  updateLegendSwatches();
+  if(STATE.days) render();
+}
+function updateLegendSwatches(){
+  const day=document.getElementById("sw-day");
+  if(!day) return;
+  day.style.background = `linear-gradient(180deg, ${cssVar("--day-stop1")}, ${cssVar("--day-stop2")})`;
+  document.getElementById("sw-tw").style.background = cssVar("--twilight-fill");
+  document.getElementById("sw-night").style.background = cssVar("--night-fill");
+  document.getElementById("sw-sr-wrap").style.color = cssVar("--sunrise-color");
+  document.getElementById("sw-ss-wrap").style.color = cssVar("--sunset-color");
+  document.getElementById("sw-noon-wrap").style.color = cssVar("--noon-color");
+}
+const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+applyTheme(prefersLight ? "light" : "dark");
+document.getElementById("themeBtn").addEventListener("click",()=>{
+  const cur=document.documentElement.getAttribute("data-theme");
+  applyTheme(cur==="light" ? "dark" : "light");
+});
+
+/* =========================================================================
+   FORMATTING
+   ========================================================================= */
+function fmt(h){
+  if(h===null||h===undefined) return "—";
+  if(typeof h==="object"&&h.polar) return h.polar==="day"?"no sunset":"no sunrise";
+  let hh = Math.floor(h);
+  let mm = Math.round((h-hh)*60);
+  if(mm===60){mm=0;hh+=1}
+  hh = ((hh%24)+24)%24;
+  return String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0");
+}
+function fmtDur(h){
+  if(h===null||h===undefined) return "—";
+  const hh = Math.floor(h);
+  const mm = Math.round((h-hh)*60);
+  return hh+"h "+String(mm).padStart(2,"0")+"m";
+}
+
+/* =========================================================================
+   CHART RENDERING
+   ========================================================================= */
+const W=1100, H=520, M={t:28,r:28,b:44,l:58};
+const IW=W-M.l-M.r, IH=H-M.t-M.b;
+function xOfDay(i,n){return M.l + (i/(n-1))*IW}
+function yOfHour(h){return M.t + (h/24)*IH}
+function yOfDaylight(h){return M.t + IH - (h/24)*IH}
+
+function render(){
+  const svg=document.getElementById("chart");
+  svg.innerHTML="";
+  const days=STATE.days;
+  if(!days) return;
+
+  const monthStarts=[];
+  days.forEach((d,i)=>{
+    const dt=new Date(d.date+"T00:00:00Z");
+    if(dt.getUTCDate()===1) monthStarts.push({i, name: dt.toLocaleString("en",{month:"short",timeZone:"UTC"})});
+  });
+
+  const ns="http://www.w3.org/2000/svg";
+  const g=document.createElementNS(ns,"g");
+  svg.appendChild(g);
+
+  if(STATE.mode==="clock") drawClock(svg,g,days,monthStarts,ns);
+  else drawDaylight(svg,g,days,monthStarts,ns);
+
+  // Polar note
+  const polarDays = days.filter(d=>d.polar).length;
+  const note=document.getElementById("polarNote");
+  if(polarDays>0){
+    const midn = days.filter(d=>d.polar==="day").length;
+    const polar = days.filter(d=>d.polar==="night").length;
+    const parts=[];
+    if(midn) parts.push(`<b>${midn}</b> days of midnight sun (sun never sets)`);
+    if(polar) parts.push(`<b>${polar}</b> days of polar night (sun never rises)`);
+    note.innerHTML = "At this latitude, there are " + parts.join(" and ") + ". Those days appear as fully lit or fully dark bands on the chart.";
+    note.classList.add("show");
+  } else {
+    note.classList.remove("show");
+  }
+}
+
+function pathFromPoints(pts){
+  return pts.map((p,i)=> (i?"L":"M")+p[0].toFixed(2)+" "+p[1].toFixed(2)).join(" ");
+}
+
+function drawClock(svg,g,days,monthStarts,ns){
+  // Night background
+  const nightRect=document.createElementNS(ns,"rect");
+  nightRect.setAttribute("x",M.l);nightRect.setAttribute("y",M.t);
+  nightRect.setAttribute("width",IW);nightRect.setAttribute("height",IH);
+  nightRect.setAttribute("fill",cssVar("--night-fill"));
+  g.appendChild(nightRect);
+
+  // For polar days where sunrise/sunset don't exist, use 0 or 24 to render full-day bands.
+  const n = days.length;
+  function getHour(d, field, polarDayVal, polarNightVal){
+    const v = d[field];
+    if(typeof v==="object" && v && v.polar){
+      return v.polar==="day" ? polarDayVal : polarNightVal;
+    }
+    return v;
+  }
+  // For sunrise-like fields: polar day -> 0 (all day), polar night -> 24 (midnight = no sun)
+  // For sunset-like: polar day -> 24, polar night -> 0
+  const dawnPts=[], riseTop=[], setBottom=[], duskPts=[];
+  days.forEach((d,i)=>{
+    const x=xOfDay(i,n);
+    const cd  = getHour(d,"civil_dawn", 0, 12);
+    const sr  = getHour(d,"sunrise",    0, 12);
+    const ss  = getHour(d,"sunset",    24, 12);
+    let cdu   = getHour(d,"civil_dusk",24, 12);
+    // Normal case: if civil dusk wraps past midnight (small number < sunset), clamp
+    if(typeof d.sunset==="number" && typeof d.civil_dusk==="number" && d.civil_dusk < d.sunset) cdu = 24;
+
+    dawnPts.push([x,yOfHour(cd)]);
+    riseTop.push([x,yOfHour(sr)]);
+    setBottom.push([x,yOfHour(ss)]);
+    duskPts.push([x,yOfHour(cdu)]);
+  });
+
+  const twColor=cssVar("--twilight-fill");
+  const twUpper=document.createElementNS(ns,"path");
+  twUpper.setAttribute("d",
+    pathFromPoints(dawnPts)+" "+
+    pathFromPoints(riseTop.slice().reverse()).replace(/^M/,"L")+" Z"
+  );
+  twUpper.setAttribute("fill",twColor);twUpper.setAttribute("opacity","0.85");
+  g.appendChild(twUpper);
+
+  const twLower=document.createElementNS(ns,"path");
+  twLower.setAttribute("d",
+    pathFromPoints(setBottom)+" "+
+    pathFromPoints(duskPts.slice().reverse()).replace(/^M/,"L")+" Z"
+  );
+  twLower.setAttribute("fill",twColor);twLower.setAttribute("opacity","0.85");
+  g.appendChild(twLower);
+
+  // Day gradient
+  const defs=document.createElementNS(ns,"defs");
+  defs.innerHTML=`
+    <linearGradient id="dayGrad" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="${cssVar('--day-stop1')}"/>
+      <stop offset="50%" stop-color="${cssVar('--day-stop2')}"/>
+      <stop offset="100%" stop-color="${cssVar('--day-stop3')}"/>
+    </linearGradient>`;
+  svg.appendChild(defs);
+
+  const dayPath=document.createElementNS(ns,"path");
+  dayPath.setAttribute("d",
+    pathFromPoints(riseTop)+" "+
+    pathFromPoints(setBottom.slice().reverse()).replace(/^M/,"L")+" Z"
+  );
+  dayPath.setAttribute("fill","url(#dayGrad)");
+  dayPath.setAttribute("opacity","0.95");
+  g.appendChild(dayPath);
+
+  // Lines (skip polar-day segments by breaking line where undefined)
+  drawBrokenLine(g,ns,days,"sunrise",cssVar("--sunrise-color"),2);
+  drawBrokenLine(g,ns,days,"sunset",cssVar("--sunset-color"),2);
+  drawBrokenLine(g,ns,days,"noon",cssVar("--noon-color"),1.3,"4 3");
+
+  drawYAxisHours(g,ns);
+  drawXAxisMonths(g,ns,monthStarts);
+
+  // DST markers
+  days.forEach((d,i)=>{
+    if(i>0 && d.dst!==days[i-1].dst){
+      const x=xOfDay(i,n);
+      const line=document.createElementNS(ns,"line");
+      line.setAttribute("x1",x);line.setAttribute("x2",x);
+      line.setAttribute("y1",M.t);line.setAttribute("y2",M.t+IH);
+      line.setAttribute("stroke",cssVar("--axis"));
+      line.setAttribute("stroke-opacity","0.5");
+      line.setAttribute("stroke-dasharray","2 4");
+      g.appendChild(line);
+      const lbl=document.createElementNS(ns,"text");
+      lbl.setAttribute("x",x+4);lbl.setAttribute("y",M.t+12);
+      lbl.setAttribute("fill",cssVar("--axis"));lbl.setAttribute("font-size","10");
+      lbl.textContent=d.dst?"→ DST":"→ STD";
+      g.appendChild(lbl);
+    }
+  });
+
+  addInteraction(svg,g,ns,days,"clock");
+}
+
+function drawBrokenLine(g,ns,days,field,color,w,dash){
+  const n=days.length;
+  let segment=[];
+  const segments=[];
+  days.forEach((d,i)=>{
+    const v=d[field];
+    if(typeof v==="number"){
+      segment.push([xOfDay(i,n), yOfHour(v)]);
+    } else {
+      if(segment.length>1) segments.push(segment);
+      segment=[];
+    }
+  });
+  if(segment.length>1) segments.push(segment);
+  segments.forEach(seg=>{
+    const p=document.createElementNS(ns,"path");
+    p.setAttribute("d",pathFromPoints(seg));
+    p.setAttribute("fill","none");
+    p.setAttribute("stroke",color);
+    p.setAttribute("stroke-width",w);
+    p.setAttribute("stroke-linejoin","round");
+    if(dash) p.setAttribute("stroke-dasharray",dash);
+    g.appendChild(p);
+  });
+}
+
+function drawDaylight(svg,g,days,monthStarts,ns){
+  const n=days.length;
+  const bg=document.createElementNS(ns,"rect");
+  bg.setAttribute("x",M.l);bg.setAttribute("y",M.t);
+  bg.setAttribute("width",IW);bg.setAttribute("height",IH);
+  bg.setAttribute("fill",cssVar("--stat-bg"));
+  g.appendChild(bg);
+
+  const pts=days.map((d,i)=>[xOfDay(i,n), yOfDaylight(d.daylight||0)]);
+  const area=document.createElementNS(ns,"path");
+  const d0=`M ${pts[0][0]} ${M.t+IH} L ` + pts.map(p=>p[0]+" "+p[1]).join(" L ") + ` L ${pts[pts.length-1][0]} ${M.t+IH} Z`;
+  area.setAttribute("d",d0);
+  const defs=document.createElementNS(ns,"defs");
+  defs.innerHTML=`<linearGradient id="dlGrad" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0%" stop-color="${cssVar('--day-stop2')}" stop-opacity="0.7"/>
+    <stop offset="100%" stop-color="${cssVar('--day-stop2')}" stop-opacity="0.05"/>
+  </linearGradient>`;
+  svg.appendChild(defs);
+  area.setAttribute("fill","url(#dlGrad)");
+  g.appendChild(area);
+
+  // curve
+  const p=document.createElementNS(ns,"path");
+  p.setAttribute("d",pathFromPoints(pts));
+  p.setAttribute("fill","none");p.setAttribute("stroke",cssVar("--noon-color"));
+  p.setAttribute("stroke-width","2.2");p.setAttribute("stroke-linejoin","round");
+  g.appendChild(p);
+
+  // Y axis
+  for(let h=0; h<=24; h+=3){
+    const y=yOfDaylight(h);
+    const line=document.createElementNS(ns,"line");
+    line.setAttribute("x1",M.l);line.setAttribute("x2",M.l+IW);
+    line.setAttribute("y1",y);line.setAttribute("y2",y);
+    line.setAttribute("stroke",cssVar("--grid"));
+    g.appendChild(line);
+    const t=document.createElementNS(ns,"text");
+    t.setAttribute("x",M.l-8);t.setAttribute("y",y+3);
+    t.setAttribute("fill",cssVar("--muted"));t.setAttribute("font-size","11");t.setAttribute("text-anchor","end");
+    t.textContent=h+"h";
+    g.appendChild(t);
+  }
+
+  drawXAxisMonths(g,ns,monthStarts);
+  addInteraction(svg,g,ns,days,"daylight");
+}
+
+function drawYAxisHours(g,ns){
+  for(let h=0; h<=24; h+=2){
+    const y=yOfHour(h);
+    const line=document.createElementNS(ns,"line");
+    line.setAttribute("x1",M.l);line.setAttribute("x2",M.l+IW);
+    line.setAttribute("y1",y);line.setAttribute("y2",y);
+    line.setAttribute("stroke",cssVar("--grid"));
+    g.appendChild(line);
+    if(h===24) continue;
+    const t=document.createElementNS(ns,"text");
+    t.setAttribute("x",M.l-8);t.setAttribute("y",y+3);
+    t.setAttribute("fill",cssVar("--muted"));t.setAttribute("font-size","11");t.setAttribute("text-anchor","end");
+    t.textContent=String(h).padStart(2,"0")+":00";
+    g.appendChild(t);
+  }
+}
+
+function drawXAxisMonths(g,ns,monthStarts){
+  monthStarts.forEach(m=>{
+    const x=xOfDay(m.i, STATE.days.length);
+    const line=document.createElementNS(ns,"line");
+    line.setAttribute("x1",x);line.setAttribute("x2",x);
+    line.setAttribute("y1",M.t);line.setAttribute("y2",M.t+IH);
+    line.setAttribute("stroke",cssVar("--grid"));
+    g.appendChild(line);
+    const t=document.createElementNS(ns,"text");
+    t.setAttribute("x",x+4);t.setAttribute("y",M.t+IH+18);
+    t.setAttribute("fill",cssVar("--muted"));t.setAttribute("font-size","11");
+    t.textContent=m.name;
+    g.appendChild(t);
+  });
+}
+
+function addInteraction(svg,g,ns,days,mode){
+  const n=days.length;
+  const hoverLine=document.createElementNS(ns,"line");
+  hoverLine.setAttribute("y1",M.t);hoverLine.setAttribute("y2",M.t+IH);
+  hoverLine.setAttribute("stroke-width","1");
+  hoverLine.setAttribute("stroke",cssVar("--hover-stroke"));
+  hoverLine.setAttribute("stroke-dasharray","3 3");
+  hoverLine.setAttribute("stroke-opacity","0");
+  g.appendChild(hoverLine);
+
+  const marker=document.createElementNS(ns,"circle");
+  marker.setAttribute("r","4");marker.setAttribute("fill",cssVar("--marker-fill"));
+  marker.setAttribute("opacity","0");
+  g.appendChild(marker);
+
+  const tip=document.getElementById("tip");
+
+  function onMove(ev){
+    const rect=svg.getBoundingClientRect();
+    const xPx = (ev.clientX-rect.left) * (W/rect.width);
+    if(xPx<M.l||xPx>M.l+IW){hide();return}
+    const frac=(xPx-M.l)/IW;
+    const i=Math.max(0,Math.min(n-1,Math.round(frac*(n-1))));
+    const d=days[i];
+    const x=xOfDay(i,n);
+    hoverLine.setAttribute("x1",x);hoverLine.setAttribute("x2",x);
+    hoverLine.setAttribute("stroke-opacity","0.45");
+
+    if(mode==="clock"){
+      const sr = typeof d.sunrise==="number" ? d.sunrise : (d.polar==="day"?0:12);
+      marker.setAttribute("cx",x);marker.setAttribute("cy",yOfHour(sr));
+    } else {
+      marker.setAttribute("cx",x);marker.setAttribute("cy",yOfDaylight(d.daylight||0));
+    }
+    marker.setAttribute("opacity","0.9");
+
+    const dt=new Date(d.date+"T00:00:00Z");
+    const dateStr=dt.toLocaleDateString("en",{weekday:"short",month:"short",day:"numeric",timeZone:"UTC"});
+    const polarLabel = d.polar==="day" ? '<span class="pill">midnight sun</span>' :
+                       d.polar==="night" ? '<span class="pill">polar night</span>' :
+                       (d.dst ? '<span class="pill">DST</span>' : '');
+    tip.innerHTML = `
+      <h4>${dateStr} ${polarLabel}</h4>
+      <div class="row"><span>Sunrise</span><b>${fmt(d.sunrise)}</b></div>
+      <div class="row"><span>Sunset</span><b>${fmt(d.sunset)}</b></div>
+      <div class="row"><span>Solar noon</span><b>${fmt(d.noon)}</b></div>
+      <div class="row"><span>Civil dawn</span><b>${fmt(d.civil_dawn)}</b></div>
+      <div class="row"><span>Civil dusk</span><b>${fmt(d.civil_dusk)}</b></div>
+      <div class="row" style="margin-top:4px;border-top:1px solid var(--card-border);padding-top:4px">
+        <span>Daylight</span><b>${fmtDur(d.daylight)}</b>
+      </div>`;
+    const wrapRect=document.getElementById("chartWrap").getBoundingClientRect();
+    const px = (x/W)*wrapRect.width;
+    const yTop = mode==="clock"
+      ? (yOfHour(typeof d.sunrise==="number"?d.sunrise:0)/H)*wrapRect.height
+      : (yOfDaylight(d.daylight||0)/H)*wrapRect.height;
+    tip.style.left=px+"px";
+    tip.style.top=(yTop-10)+"px";
+    tip.style.opacity="1";
+  }
+  function hide(){
+    hoverLine.setAttribute("stroke-opacity","0");
+    marker.setAttribute("opacity","0");
+    tip.style.opacity="0";
+  }
+  svg.addEventListener("mousemove",onMove);
+  svg.addEventListener("mouseleave",hide);
+  svg.addEventListener("touchmove",e=>{if(e.touches[0]) onMove(e.touches[0])});
+  svg.addEventListener("touchend",hide);
+}
+
+/* =========================================================================
+   STATS
+   ========================================================================= */
+function fillStats(){
+  const days=STATE.days;
+  let max=days[0], min=days[0];
+  days.forEach(d=>{
+    if((d.daylight??-1)>(max.daylight??-1)) max=d;
+    if((d.daylight??25)<(min.daylight??25)) min=d;
+  });
+  const today=new Date();
+  const sameYear = today.getFullYear()===STATE.year;
+  let todayRec;
+  if(sameYear){
+    const iso = today.toISOString().slice(0,10);
+    todayRec = days.find(d=>d.date===iso);
+  }
+  if(!todayRec) todayRec = days[Math.floor(days.length/2)];
+
+  const box=document.getElementById("stats");
+  function fmtDate(iso){return new Date(iso+"T00:00:00Z").toLocaleDateString("en",{month:"short",day:"numeric",timeZone:"UTC"})}
+  const todayLabel = sameYear ? `Today (${fmtDate(todayRec.date)})` : `Mid-year (${fmtDate(todayRec.date)})`;
+  box.innerHTML=`
+    <div class="stat"><div class="k">${todayLabel}</div>
+      <div class="v">${fmt(todayRec.sunrise)} → ${fmt(todayRec.sunset)}</div>
+      <div class="k" style="margin-top:4px">${fmtDur(todayRec.daylight)} of daylight</div></div>
+    <div class="stat"><div class="k">Longest day · ${fmtDate(max.date)}</div>
+      <div class="v">${fmtDur(max.daylight)}</div>
+      <div class="k" style="margin-top:4px">${fmt(max.sunrise)} → ${fmt(max.sunset)}</div></div>
+    <div class="stat"><div class="k">Shortest day · ${fmtDate(min.date)}</div>
+      <div class="v">${fmtDur(min.daylight)}</div>
+      <div class="k" style="margin-top:4px">${fmt(min.sunrise)} → ${fmt(min.sunset)}</div></div>
+    <div class="stat"><div class="k">Daylight swing</div>
+      <div class="v">${fmtDur((max.daylight||0)-(min.daylight||0))}</div>
+      <div class="k" style="margin-top:4px">between solstices</div></div>
+  `;
+}
+
+/* =========================================================================
+   LOCATION: geocoding + reverse geocoding via Nominatim
+   ========================================================================= */
+const NOMINATIM = "https://nominatim.openstreetmap.org";
+
+async function geocode(query){
+  const url = `${NOMINATIM}/search?format=json&limit=5&q=${encodeURIComponent(query)}`;
+  const r = await fetch(url, { headers: { "Accept": "application/json" } });
+  if(!r.ok) throw new Error("geocode failed");
+  return r.json();
+}
+async function reverseGeocode(lat, lon){
+  const url = `${NOMINATIM}/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error("reverse geocode failed");
+  return r.json();
+}
+
+function setStatus(msg, isErr){
+  const s=document.getElementById("status");
+  s.textContent = msg || "";
+  s.classList.toggle("err", !!isErr);
+}
+
+function updateHeader(){
+  const off = STATE.days ? STATE.days[Math.floor(STATE.days.length/2)].tzOffset : 0;
+  const sub=document.getElementById("locSub");
+  const offStr = (off>=0?"+":"")+off;
+  sub.innerHTML = `<b>${STATE.label}</b> · ${STATE.lat.toFixed(3)}°, ${STATE.lon.toFixed(3)}° · ${STATE.tz} (UTC${offStr}) · Year <b>${STATE.year}</b>`;
+  document.getElementById("yearLabel").textContent = STATE.year;
+}
+
+function recompute(){
+  setStatus("Computing sun positions…");
+  // Defer so status paints
+  setTimeout(()=>{
+    try{
+      STATE.days = computeYear(STATE.year, STATE.lat, STATE.lon, STATE.tz);
+      updateHeader();
+      render();
+      fillStats();
+      setStatus("");
+    } catch(e){
+      console.error(e);
+      setStatus("Couldn't compute: "+e.message, true);
+    }
+  },10);
+}
+
+/* --- Search field with debounced suggestions --- */
+const input=document.getElementById("locInput");
+const sugg=document.getElementById("suggestions");
+let searchTimer=null, activeIdx=-1, currentResults=[];
+
+input.addEventListener("input", ()=>{
+  const q=input.value.trim();
+  clearTimeout(searchTimer);
+  if(q.length<2){ sugg.classList.remove("open"); sugg.innerHTML=""; return; }
+  searchTimer=setTimeout(async ()=>{
+    try{
+      const results = await geocode(q);
+      currentResults=results; activeIdx=-1;
+      renderSuggestions(results);
+    }catch(e){ setStatus("Search failed: "+e.message, true); }
+  }, 280);
+});
+input.addEventListener("keydown", e=>{
+  if(!sugg.classList.contains("open")) return;
+  if(e.key==="ArrowDown"){ e.preventDefault(); activeIdx=Math.min(currentResults.length-1,activeIdx+1); highlightActive(); }
+  else if(e.key==="ArrowUp"){ e.preventDefault(); activeIdx=Math.max(-1,activeIdx-1); highlightActive(); }
+  else if(e.key==="Enter"){ e.preventDefault(); if(activeIdx>=0) selectResult(currentResults[activeIdx]); else if(currentResults[0]) selectResult(currentResults[0]); }
+  else if(e.key==="Escape"){ sugg.classList.remove("open"); }
+});
+document.addEventListener("click", e=>{
+  if(!e.target.closest(".field")) sugg.classList.remove("open");
+});
+
+function renderSuggestions(results){
+  if(!results.length){ sugg.classList.remove("open"); return; }
+  sugg.innerHTML = results.map((r,i)=>`
+    <div class="item" data-i="${i}">
+      ${escapeHtml(r.display_name.split(",")[0])}
+      <small>${escapeHtml(r.display_name)}</small>
+    </div>
+  `).join("");
+  sugg.classList.add("open");
+  sugg.querySelectorAll(".item").forEach(el=>{
+    el.addEventListener("click",()=>selectResult(results[parseInt(el.dataset.i)]));
+  });
+}
+function highlightActive(){
+  sugg.querySelectorAll(".item").forEach((el,i)=>el.classList.toggle("active", i===activeIdx));
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+async function selectResult(r){
+  if(!r) return;
+  sugg.classList.remove("open");
+  input.value = r.display_name.split(",").slice(0,2).join(", ");
+  const lat=parseFloat(r.lat), lon=parseFloat(r.lon);
+  await applyLocation(lat, lon, r.display_name.split(",").slice(0,2).join(", "));
+}
+
+async function applyLocation(lat, lon, label){
+  STATE.lat=lat; STATE.lon=lon;
+  if(label) STATE.label=label;
+  STATE.tz = await tzForCoords(lat, lon);
+  recompute();
+}
+
+/* Derive the proper IANA timezone for coordinates.
+   First try timeapi.io (CORS-friendly, returns proper zone with DST).
+   Fall back to a longitude-based fixed offset if the lookup fails. */
+const TZ_CACHE = new Map();
+async function tzForCoords(lat, lon){
+  const key = lat.toFixed(2)+","+lon.toFixed(2);
+  if(TZ_CACHE.has(key)) return TZ_CACHE.get(key);
+  try{
+    const r = await fetch(`https://timeapi.io/api/timezone/coordinate?latitude=${lat}&longitude=${lon}`);
+    if(r.ok){
+      const j = await r.json();
+      if(j && j.timeZone){
+        TZ_CACHE.set(key, j.timeZone);
+        return j.timeZone;
+      }
+    }
+  }catch(e){ /* fall through */ }
+  // Fallback: fixed longitude-based offset
+  const offset = Math.round(lon/15);
+  const clamped = Math.max(-12, Math.min(14, offset));
+  const sign = clamped>=0 ? "-" : "+";
+  const zone = "Etc/GMT" + sign + Math.abs(clamped);
+  TZ_CACHE.set(key, zone);
+  return zone;
+}
+
+/* --- Geolocation button --- */
+document.getElementById("geoBtn").addEventListener("click",()=>{
+  if(!navigator.geolocation){ setStatus("Geolocation not supported by this browser.", true); return; }
+  setStatus("Asking for your location…");
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const {latitude,longitude}=pos.coords;
+    let label = `${latitude.toFixed(3)}°, ${longitude.toFixed(3)}°`;
+    try{
+      const r = await reverseGeocode(latitude, longitude);
+      if(r && r.display_name) label = r.display_name.split(",").slice(0,2).join(", ");
+      input.value = label;
+    }catch(e){}
+    STATE.lat=latitude; STATE.lon=longitude; STATE.label=label;
+    STATE.tz = await tzForCoords(latitude, longitude);
+    recompute();
+  }, err=>{
+    setStatus("Couldn't get location: "+err.message, true);
+  }, { enableHighAccuracy:false, timeout:10000, maximumAge:300000 });
+});
+
+/* --- Year controls --- */
+document.getElementById("yearDown").addEventListener("click",()=>{ STATE.year--; recompute(); });
+document.getElementById("yearUp").addEventListener("click",()=>{ STATE.year++; recompute(); });
+
+/* --- Mode buttons --- */
+document.querySelectorAll("[data-mode]").forEach(b=>{
+  b.addEventListener("click",()=>{
+    document.querySelectorAll("[data-mode]").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    STATE.mode = b.dataset.mode;
+    render();
+  });
+});
+
+/* --- Initial: set correct tz for default Oslo, then try geolocation --- */
+async function init(){
+  input.value = STATE.label;
+  STATE.tz = await tzForCoords(STATE.lat, STATE.lon);
+  recompute();
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const {latitude,longitude}=pos.coords;
+      let label = `${latitude.toFixed(3)}°, ${longitude.toFixed(3)}°`;
+      try{
+        const r = await reverseGeocode(latitude, longitude);
+        if(r && r.display_name) label = r.display_name.split(",").slice(0,2).join(", ");
+        input.value = label;
+      }catch(e){}
+      STATE.lat=latitude; STATE.lon=longitude; STATE.label=label;
+      STATE.tz = await tzForCoords(latitude, longitude);
+      recompute();
+    }, ()=>{ /* denied or failed – stick with Oslo */ },
+    { enableHighAccuracy:false, timeout:8000, maximumAge:600000 });
+  }
+}
+init();
+</script>
+</body>
+</html>
