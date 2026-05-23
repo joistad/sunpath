@@ -165,6 +165,23 @@
   .btn.active{background:var(--btn-active-bg);border-color:var(--btn-active-border)}
   .btn svg{width:15px;height:15px}
   .btn.icon-only{padding:7px 9px}
+  .btn.flag{font-size:16px;line-height:1;padding:6px 10px}
+
+  /* Language menu */
+  .lang-wrap{position:relative}
+  .lang-menu{
+    position:absolute;top:calc(100% + 6px);right:0;z-index:30;
+    background:var(--tip-bg);border:1px solid var(--tip-border);
+    border-radius:10px;box-shadow:var(--tip-shadow);
+    min-width:160px;padding:4px;display:none;
+  }
+  .lang-menu.open{display:block}
+  .lang-menu .item{
+    display:flex;align-items:center;gap:8px;padding:7px 10px;
+    border-radius:6px;cursor:pointer;font-size:13px;color:var(--ink);
+  }
+  .lang-menu .item:hover, .lang-menu .item.active{background:var(--btn-active-bg)}
+  .lang-menu .item .fl{font-size:16px;line-height:1}
 
   /* Info popovers */
   .info{
@@ -206,18 +223,22 @@
   <header>
     <div>
       <h1>Sunpath</h1>
-      <div class="sub" style="margin-bottom:4px">A year of sunrise & sunset, anywhere on Earth</div>
-      <div class="sub" id="locSub">Loading your location…</div>
+      <div class="sub" style="margin-bottom:4px" data-i18n="tagline">A year of sunrise & sunset, anywhere on Earth</div>
+      <div class="sub" id="locSub" data-i18n="loadingLocation">Loading your location…</div>
     </div>
     <div class="controls">
       <button class="btn active" data-mode="clock">
-        Clock view
-        <span class="info" tabindex="0" data-tip="Shows the exact local clock time of sunrise, sunset, and solar noon for each day of the year. The glowing band is when the sun is above the horizon.">i</span>
+        <span data-i18n="clockView">Clock view</span>
+        <span class="info" tabindex="0" data-i18n-tip="tipClockView">i</span>
       </button>
       <button class="btn" data-mode="daylight">
-        Daylight hours
-        <span class="info" tabindex="0" data-tip="Shows only the length of each day — how many hours and minutes of sunlight you get — as a single curve across the year.">i</span>
+        <span data-i18n="daylightHours">Daylight hours</span>
+        <span class="info" tabindex="0" data-i18n-tip="tipDaylightHours">i</span>
       </button>
+      <div class="lang-wrap">
+        <button class="btn flag" id="langBtn" aria-label="Language" title="Language"></button>
+        <div class="lang-menu" id="langMenu"></div>
+      </div>
       <button class="btn theme-toggle icon-only" id="themeBtn" title="Toggle light/dark" aria-label="Toggle theme"></button>
     </div>
   </header>
@@ -226,16 +247,16 @@
     <div class="locbar">
       <div class="field">
         <svg class="pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <input id="locInput" type="text" placeholder="Search a city or place…" autocomplete="off" spellcheck="false">
+        <input id="locInput" type="text" data-i18n-placeholder="searchPlaceholder" placeholder="Search a city or place…" autocomplete="off" spellcheck="false">
         <div class="suggestions" id="suggestions"></div>
       </div>
-      <button class="btn" id="geoBtn" title="Use my current location">
+      <button class="btn" id="geoBtn" data-i18n-title="titleGeo" title="Use my current location">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
-        Use my location
+        <span data-i18n="useMyLocation">Use my location</span>
       </button>
-      <button class="btn" id="yearDown" title="Previous year">‹</button>
+      <button class="btn" id="yearDown" data-i18n-title="titlePrevYear" title="Previous year">‹</button>
       <span style="font-weight:600;min-width:48px;text-align:center" id="yearLabel">2026</span>
-      <button class="btn" id="yearUp" title="Next year">›</button>
+      <button class="btn" id="yearUp" data-i18n-title="titleNextYear" title="Next year">›</button>
     </div>
     <div class="status" id="status"></div>
   </div>
@@ -247,23 +268,23 @@
     </div>
 
     <div class="legend" id="legend">
-      <span><span class="sw" id="sw-day"></span>Daylight
-        <span class="info" tabindex="0" data-tip="The period between sunrise and sunset, when the sun is above the horizon.">i</span>
+      <span><span class="sw" id="sw-day"></span><span data-i18n="legendDaylight">Daylight</span>
+        <span class="info" tabindex="0" data-i18n-tip="tipDaylight">i</span>
       </span>
-      <span><span class="sw" id="sw-tw"></span>Civil twilight
-        <span class="info" tabindex="0" data-tip="The ~30 minutes before sunrise and after sunset when the sun is just below the horizon (0° to 6° below). Sky is bright enough to see outside without artificial light.">i</span>
+      <span><span class="sw" id="sw-tw"></span><span data-i18n="legendTwilight">Civil twilight</span>
+        <span class="info" tabindex="0" data-i18n-tip="tipTwilight">i</span>
       </span>
-      <span><span class="sw" id="sw-night"></span>Night
-        <span class="info" tabindex="0" data-tip="When the sun is more than 6° below the horizon — it's dark outside.">i</span>
+      <span><span class="sw" id="sw-night"></span><span data-i18n="legendNight">Night</span>
+        <span class="info" tabindex="0" data-i18n-tip="tipNight">i</span>
       </span>
-      <span id="sw-sr-wrap"><span class="sw line"></span><span style="color:var(--muted)">Sunrise</span>
-        <span class="info" tabindex="0" data-tip="The moment the top edge of the sun first appears above the horizon.">i</span>
+      <span id="sw-sr-wrap"><span class="sw line"></span><span style="color:var(--muted)" data-i18n="sunrise">Sunrise</span>
+        <span class="info" tabindex="0" data-i18n-tip="tipSunrise">i</span>
       </span>
-      <span id="sw-ss-wrap"><span class="sw line"></span><span style="color:var(--muted)">Sunset</span>
-        <span class="info" tabindex="0" data-tip="The moment the top edge of the sun disappears below the horizon.">i</span>
+      <span id="sw-ss-wrap"><span class="sw line"></span><span style="color:var(--muted)" data-i18n="sunset">Sunset</span>
+        <span class="info" tabindex="0" data-i18n-tip="tipSunset">i</span>
       </span>
-      <span id="sw-noon-wrap"><span class="sw dash"></span><span style="color:var(--muted)">Solar noon</span>
-        <span class="info" tabindex="0" data-tip="When the sun is highest in the sky — exactly midway between sunrise and sunset. Usually a bit offset from 12:00 clock time because of your longitude and the equation of time.">i</span>
+      <span id="sw-noon-wrap"><span class="sw dash"></span><span style="color:var(--muted)" data-i18n="solarNoon">Solar noon</span>
+        <span class="info" tabindex="0" data-i18n-tip="tipSolarNoon">i</span>
       </span>
     </div>
 
@@ -273,15 +294,279 @@
   </div>
 
   <footer>
-    <div>Positions computed with the NOAA solar algorithm · Location search by <a href="https://www.openstreetmap.org/copyright" style="color:var(--muted)">OpenStreetMap / Nominatim</a></div>
+    <div data-i18n-html="footerCredits">Positions computed with the NOAA solar algorithm · Location search by <a href="https://www.openstreetmap.org/copyright" style="color:var(--muted)">OpenStreetMap / Nominatim</a></div>
     <div style="margin-top:6px">
-      Made by <a href="https://github.com/joistad" style="color:var(--ink);text-decoration:none;border-bottom:1px dotted var(--muted)" target="_blank" rel="noopener">Jon H. Øistad</a>
-      · <a href="https://github.com/joistad/sunpath" style="color:var(--muted)" target="_blank" rel="noopener">Source on GitHub</a>
+      <span data-i18n="madeBy">Made by</span>
+      <a href="https://github.com/joistad" style="color:var(--ink);text-decoration:none;border-bottom:1px dotted var(--muted)" target="_blank" rel="noopener">Jon H. Øistad</a>
+      · <a href="https://github.com/joistad/sunpath" style="color:var(--muted)" target="_blank" rel="noopener" data-i18n="sourceOnGitHub">Source on GitHub</a>
     </div>
   </footer>
 </div>
 
 <script>
+/* =========================================================================
+   I18N
+   ========================================================================= */
+const LANGS = {
+  en: { label: "English",  flag: "🇬🇧", locale: "en-GB" },
+  nb: { label: "Norsk",    flag: "🇳🇴", locale: "nb-NO" },
+  ja: { label: "日本語",    flag: "🇯🇵", locale: "ja-JP" },
+};
+
+const I18N = {
+  en: {
+    tagline: "A year of sunrise & sunset, anywhere on Earth",
+    loadingLocation: "Loading your location…",
+    clockView: "Clock view",
+    daylightHours: "Daylight hours",
+    tipClockView: "Shows the exact local clock time of sunrise, sunset, and solar noon for each day of the year. The glowing band is when the sun is above the horizon.",
+    tipDaylightHours: "Shows only the length of each day — how many hours and minutes of sunlight you get — as a single curve across the year.",
+    searchPlaceholder: "Search a city or place…",
+    useMyLocation: "Use my location",
+    titleGeo: "Use my current location",
+    titlePrevYear: "Previous year",
+    titleNextYear: "Next year",
+    legendDaylight: "Daylight",
+    legendTwilight: "Civil twilight",
+    legendNight: "Night",
+    sunrise: "Sunrise",
+    sunset: "Sunset",
+    solarNoon: "Solar noon",
+    tipDaylight: "The period between sunrise and sunset, when the sun is above the horizon.",
+    tipTwilight: "The ~30 minutes before sunrise and after sunset when the sun is just below the horizon (0° to 6° below). Sky is bright enough to see outside without artificial light.",
+    tipNight: "When the sun is more than 6° below the horizon — it's dark outside.",
+    tipSunrise: "The moment the top edge of the sun first appears above the horizon.",
+    tipSunset: "The moment the top edge of the sun disappears below the horizon.",
+    tipSolarNoon: "When the sun is highest in the sky — exactly midway between sunrise and sunset. Usually a bit offset from 12:00 clock time because of your longitude and the equation of time.",
+    footerCredits: 'Positions computed with the NOAA solar algorithm · Location search by <a href="https://www.openstreetmap.org/copyright" style="color:var(--muted)">OpenStreetMap / Nominatim</a>',
+    madeBy: "Made by",
+    sourceOnGitHub: "Source on GitHub",
+    civilDawn: "Civil dawn",
+    civilDusk: "Civil dusk",
+    daylight: "Daylight",
+    today: "Today",
+    midYear: "Mid-year",
+    ofDaylight: "of daylight",
+    longestDay: "Longest day",
+    shortestDay: "Shortest day",
+    daylightSwing: "Daylight swing",
+    betweenSolstices: "between solstices",
+    year: "Year",
+    statusComputing: "Computing sun positions…",
+    statusCouldntCompute: "Couldn't compute: ",
+    statusSearchFailed: "Search failed: ",
+    statusAskingLocation: "Asking for your location…",
+    statusCouldntGetLocation: "Couldn't get location: ",
+    statusGeoUnsupported: "Geolocation not supported by this browser.",
+    polarMidnightSun: "days of midnight sun (sun never sets)",
+    polarNight: "days of polar night (sun never rises)",
+    polarPrefix: "At this latitude, there are ",
+    polarSuffix: ". Those days appear as fully lit or fully dark bands on the chart.",
+    polarAnd: " and ",
+    pillMidnightSun: "midnight sun",
+    pillPolarNight: "polar night",
+    pillDst: "DST",
+    noSunrise: "no sunrise",
+    noSunset: "no sunset",
+    dstArrow: "→ DST",
+    stdArrow: "→ STD",
+    themeToDark: "Switch to dark mode",
+    themeToLight: "Switch to light mode",
+    language: "Language",
+  },
+  nb: {
+    tagline: "Et år med soloppgang og solnedgang, hvor som helst på jorden",
+    loadingLocation: "Henter posisjonen din…",
+    clockView: "Klokkeslett",
+    daylightHours: "Dagslystimer",
+    tipClockView: "Viser nøyaktig lokalt klokkeslett for soloppgang, solnedgang og soltidens middag for hver dag i året. Det lysende båndet er når sola er over horisonten.",
+    tipDaylightHours: "Viser bare lengden på hver dag — hvor mange timer og minutter med sollys du får — som én kurve gjennom året.",
+    searchPlaceholder: "Søk etter en by eller et sted…",
+    useMyLocation: "Bruk min posisjon",
+    titleGeo: "Bruk min nåværende posisjon",
+    titlePrevYear: "Forrige år",
+    titleNextYear: "Neste år",
+    legendDaylight: "Dagslys",
+    legendTwilight: "Borgerlig skumring",
+    legendNight: "Natt",
+    sunrise: "Soloppgang",
+    sunset: "Solnedgang",
+    solarNoon: "Soltidens middag",
+    tipDaylight: "Tiden mellom soloppgang og solnedgang, når sola er over horisonten.",
+    tipTwilight: "De ˜30 minuttene før soloppgang og etter solnedgang når sola er rett under horisonten (0° til 6° under). Himmelen er lys nok til at man kan være ute uten kunstig lys.",
+    tipNight: "Når sola er mer enn 6° under horisonten — da er det mørkt ute.",
+    tipSunrise: "Øyeblikket da øvre kant av sola først kommer over horisonten.",
+    tipSunset: "Øyeblikket da øvre kant av sola forsvinner under horisonten.",
+    tipSolarNoon: "Når sola står høyest på himmelen — nøyaktig midt mellom soloppgang og solnedgang. Ligger ofte litt forskjøvet fra kl. 12:00 på grunn av lengdegrad og tidslikningen.",
+    footerCredits: 'Posisjoner beregnet med NOAAs solalgoritme · Stedssøk via <a href="https://www.openstreetmap.org/copyright" style="color:var(--muted)">OpenStreetMap / Nominatim</a>',
+    madeBy: "Laget av",
+    sourceOnGitHub: "Kildekode på GitHub",
+    civilDawn: "Borgerlig morgengry",
+    civilDusk: "Borgerlig skumring",
+    daylight: "Dagslys",
+    today: "I dag",
+    midYear: "Midt i året",
+    ofDaylight: "med dagslys",
+    longestDay: "Lengste dag",
+    shortestDay: "Korteste dag",
+    daylightSwing: "Dagslysvariasjon",
+    betweenSolstices: "mellom solvervene",
+    year: "År",
+    statusComputing: "Beregner solposisjoner…",
+    statusCouldntCompute: "Kunne ikke beregne: ",
+    statusSearchFailed: "Søk mislyktes: ",
+    statusAskingLocation: "Spør om posisjonen din…",
+    statusCouldntGetLocation: "Kunne ikke hente posisjon: ",
+    statusGeoUnsupported: "Posisjonstjenester støttes ikke av denne nettleseren.",
+    polarMidnightSun: "dager med midnattssol (sola går aldri ned)",
+    polarNight: "dager med mørketid (sola står aldri opp)",
+    polarPrefix: "På denne breddegraden er det ",
+    polarSuffix: ". Disse dagene vises som helt lyse eller helt mørke bånd i diagrammet.",
+    polarAnd: " og ",
+    pillMidnightSun: "midnattssol",
+    pillPolarNight: "mørketid",
+    pillDst: "Sommertid",
+    noSunrise: "ingen soloppgang",
+    noSunset: "ingen solnedgang",
+    dstArrow: "→ Sommertid",
+    stdArrow: "→ Normaltid",
+    themeToDark: "Bytt til mørk modus",
+    themeToLight: "Bytt til lys modus",
+    language: "Språk",
+  },
+  ja: {
+    tagline: "地球上のどこでも、一年を通した日の出と日の入り",
+    loadingLocation: "現在地を読み込み中…",
+    clockView: "時刻表示",
+    daylightHours: "明るさの長さ",
+    tipClockView: "一年の各日について、現地時間での日の出・日の入り・南中時刻を示します。光る帯は太陽が地平線上にある時間です。",
+    tipDaylightHours: "各日の明るい時間（日照時間）を、一年を通じて１本の曲線で表示します。",
+    searchPlaceholder: "都市や場所を検索…",
+    useMyLocation: "現在地を使用",
+    titleGeo: "現在地を使用",
+    titlePrevYear: "前の年",
+    titleNextYear: "次の年",
+    legendDaylight: "明るさ",
+    legendTwilight: "市民薇光",
+    legendNight: "夜",
+    sunrise: "日の出",
+    sunset: "日の入り",
+    solarNoon: "南中時刻",
+    tipDaylight: "日の出から日の入りまで、太陽が地平線より上にある時間。",
+    tipTwilight: "日の出前と日の入り後の約３０分、太陽が地平線のすぐ下（０～６°）にある時間です。人工灯なしで外が見える明るさがあります。",
+    tipNight: "太陽が地平線より６°以上下にある状態——外は暗い状態です。",
+    tipSunrise: "太陽の上端が地平線に初めて現れる瞬間。",
+    tipSunset: "太陽の上端が地平線下に沈む瞬間。",
+    tipSolarNoon: "太陽が空の最も高い位置に達する時刻——日の出と日の入りのちょうど中間です。経度と均時差の関係で、クロックの12：00からしばしばずれます。",
+    footerCredits: 'NOAA太陽位置アルゴリズムによる計算 · 場所検索は<a href="https://www.openstreetmap.org/copyright" style="color:var(--muted)">OpenStreetMap / Nominatim</a>',
+    madeBy: "作者：",
+    sourceOnGitHub: "GitHubのソースコード",
+    civilDawn: "市民薇明",
+    civilDusk: "市民薇光",
+    daylight: "明るさ",
+    today: "今日",
+    midYear: "年の中間",
+    ofDaylight: "の日照時間",
+    longestDay: "最も長い日",
+    shortestDay: "最も短い日",
+    daylightSwing: "日照時間の差",
+    betweenSolstices: "各至の間",
+    year: "年",
+    statusComputing: "太陽の位置を計算中…",
+    statusCouldntCompute: "計算できませんでした：",
+    statusSearchFailed: "検索に失敗しました：",
+    statusAskingLocation: "現在地を取得中…",
+    statusCouldntGetLocation: "現在地を取得できませんでした：",
+    statusGeoUnsupported: "このブラウザは位置情報に対応していません。",
+    polarMidnightSun: "日の白夜（太陽が沈まない日）",
+    polarNight: "日の極夜（太陽が昇らない日）",
+    polarPrefix: "この緯度では、",
+    polarSuffix: "があります。それらの日はチャート上で完全に明るい、または完全に暗い帯として表示されます。",
+    polarAnd: "と",
+    pillMidnightSun: "白夜",
+    pillPolarNight: "極夜",
+    pillDst: "夏時間",
+    noSunrise: "日の出なし",
+    noSunset: "日の入りなし",
+    dstArrow: "→ 夏時間",
+    stdArrow: "→ 標準時",
+    themeToDark: "ダークモードに切り替え",
+    themeToLight: "ライトモードに切り替え",
+    language: "言語",
+  },
+};
+
+function detectLang(){
+  const tag = (navigator.language || "en").toLowerCase();
+  if(tag.startsWith("ja")) return "ja";
+  if(tag.startsWith("nb")||tag.startsWith("no")||tag.startsWith("nn")) return "nb";
+  return "en";
+}
+
+let LANG = detectLang();
+function t(key){ return (I18N[LANG] && I18N[LANG][key]) || I18N.en[key] || key; }
+function L(){ return LANGS[LANG].locale; }
+
+function applyI18nDOM(){
+  document.documentElement.lang = L().split("-")[0];
+  document.title = "Sunpath — " + t("tagline");
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    el.textContent = t(el.getAttribute("data-i18n"));
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach(el=>{
+    el.innerHTML = t(el.getAttribute("data-i18n-html"));
+  });
+  document.querySelectorAll("[data-i18n-tip]").forEach(el=>{
+    el.setAttribute("data-tip", t(el.getAttribute("data-i18n-tip")));
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>{
+    el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
+  });
+  document.querySelectorAll("[data-i18n-title]").forEach(el=>{
+    el.setAttribute("title", t(el.getAttribute("data-i18n-title")));
+  });
+  // Theme button title
+  const themeBtn = document.getElementById("themeBtn");
+  if(themeBtn){
+    const cur = document.documentElement.getAttribute("data-theme");
+    themeBtn.title = cur === "light" ? t("themeToDark") : t("themeToLight");
+  }
+  // Language button shows current flag
+  const langBtn = document.getElementById("langBtn");
+  if(langBtn){
+    langBtn.textContent = LANGS[LANG].flag;
+    langBtn.title = t("language");
+  }
+}
+
+function buildLangMenu(){
+  const menu = document.getElementById("langMenu");
+  menu.innerHTML = Object.entries(LANGS).map(([code, info])=>
+    `<div class="item${code===LANG?" active":""}" data-lang="${code}">
+      <span class="fl">${info.flag}</span><span>${info.label}</span>
+    </div>`
+  ).join("");
+  menu.querySelectorAll(".item").forEach(el=>{
+    el.addEventListener("click",()=>{
+      setLang(el.dataset.lang);
+      menu.classList.remove("open");
+    });
+  });
+}
+
+function setLang(code){
+  if(!LANGS[code]) return;
+  LANG = code;
+  applyI18nDOM();
+  buildLangMenu();
+  // Re-render everything that contains localized dynamic text
+  if(STATE && STATE.days){
+    updateHeader();
+    render();
+    fillStats();
+  }
+}
+
 /* =========================================================================
    SOLAR CALCULATIONS (NOAA algorithm, ported from Python)
    Returns local decimal hours for a given date/lat/lon/tz-offset.
@@ -429,7 +714,7 @@ function applyTheme(theme){
   document.documentElement.setAttribute("data-theme",theme);
   const btn=document.getElementById("themeBtn");
   btn.innerHTML = theme==="light" ? MOON_SVG : SUN_SVG;
-  btn.title = theme==="light" ? "Switch to dark mode" : "Switch to light mode";
+  btn.title = theme==="light" ? t("themeToDark") : t("themeToLight");
   updateLegendSwatches();
   if(STATE.days) render();
 }
@@ -455,7 +740,7 @@ document.getElementById("themeBtn").addEventListener("click",()=>{
    ========================================================================= */
 function fmt(h){
   if(h===null||h===undefined) return "—";
-  if(typeof h==="object"&&h.polar) return h.polar==="day"?"no sunset":"no sunrise";
+  if(typeof h==="object"&&h.polar) return h.polar==="day"?t("noSunset"):t("noSunrise");
   let hh = Math.floor(h);
   let mm = Math.round((h-hh)*60);
   if(mm===60){mm=0;hh+=1}
@@ -487,7 +772,7 @@ function render(){
   const monthStarts=[];
   days.forEach((d,i)=>{
     const dt=new Date(d.date+"T00:00:00Z");
-    if(dt.getUTCDate()===1) monthStarts.push({i, name: dt.toLocaleString("en",{month:"short",timeZone:"UTC"})});
+    if(dt.getUTCDate()===1) monthStarts.push({i, name: dt.toLocaleString(L(),{month:"short",timeZone:"UTC"})});
   });
 
   const ns="http://www.w3.org/2000/svg";
@@ -504,9 +789,9 @@ function render(){
     const midn = days.filter(d=>d.polar==="day").length;
     const polar = days.filter(d=>d.polar==="night").length;
     const parts=[];
-    if(midn) parts.push(`<b>${midn}</b> days of midnight sun (sun never sets)`);
-    if(polar) parts.push(`<b>${polar}</b> days of polar night (sun never rises)`);
-    note.innerHTML = "At this latitude, there are " + parts.join(" and ") + ". Those days appear as fully lit or fully dark bands on the chart.";
+    if(midn) parts.push(`<b>${midn}</b> ${t("polarMidnightSun")}`);
+    if(polar) parts.push(`<b>${polar}</b> ${t("polarNight")}`);
+    note.innerHTML = t("polarPrefix") + parts.join(t("polarAnd")) + t("polarSuffix");
     note.classList.add("show");
   } else {
     note.classList.remove("show");
@@ -610,7 +895,7 @@ function drawClock(svg,g,days,monthStarts,ns){
       const lbl=document.createElementNS(ns,"text");
       lbl.setAttribute("x",x+4);lbl.setAttribute("y",M.t+12);
       lbl.setAttribute("fill",cssVar("--axis"));lbl.setAttribute("font-size","10");
-      lbl.textContent=d.dst?"→ DST":"→ STD";
+      lbl.textContent=d.dst?t("dstArrow"):t("stdArrow");
       g.appendChild(lbl);
     }
   });
@@ -761,19 +1046,19 @@ function addInteraction(svg,g,ns,days,mode){
     marker.setAttribute("opacity","0.9");
 
     const dt=new Date(d.date+"T00:00:00Z");
-    const dateStr=dt.toLocaleDateString("en",{weekday:"short",month:"short",day:"numeric",timeZone:"UTC"});
-    const polarLabel = d.polar==="day" ? '<span class="pill">midnight sun</span>' :
-                       d.polar==="night" ? '<span class="pill">polar night</span>' :
-                       (d.dst ? '<span class="pill">DST</span>' : '');
+    const dateStr=dt.toLocaleDateString(L(),{weekday:"short",month:"short",day:"numeric",timeZone:"UTC"});
+    const polarLabel = d.polar==="day" ? `<span class="pill">${t("pillMidnightSun")}</span>` :
+                       d.polar==="night" ? `<span class="pill">${t("pillPolarNight")}</span>` :
+                       (d.dst ? `<span class="pill">${t("pillDst")}</span>` : '');
     tip.innerHTML = `
       <h4>${dateStr} ${polarLabel}</h4>
-      <div class="row"><span>Sunrise</span><b>${fmt(d.sunrise)}</b></div>
-      <div class="row"><span>Sunset</span><b>${fmt(d.sunset)}</b></div>
-      <div class="row"><span>Solar noon</span><b>${fmt(d.noon)}</b></div>
-      <div class="row"><span>Civil dawn</span><b>${fmt(d.civil_dawn)}</b></div>
-      <div class="row"><span>Civil dusk</span><b>${fmt(d.civil_dusk)}</b></div>
+      <div class="row"><span>${t("sunrise")}</span><b>${fmt(d.sunrise)}</b></div>
+      <div class="row"><span>${t("sunset")}</span><b>${fmt(d.sunset)}</b></div>
+      <div class="row"><span>${t("solarNoon")}</span><b>${fmt(d.noon)}</b></div>
+      <div class="row"><span>${t("civilDawn")}</span><b>${fmt(d.civil_dawn)}</b></div>
+      <div class="row"><span>${t("civilDusk")}</span><b>${fmt(d.civil_dusk)}</b></div>
       <div class="row" style="margin-top:4px;border-top:1px solid var(--card-border);padding-top:4px">
-        <span>Daylight</span><b>${fmtDur(d.daylight)}</b>
+        <span>${t("daylight")}</span><b>${fmtDur(d.daylight)}</b>
       </div>`;
     const wrapRect=document.getElementById("chartWrap").getBoundingClientRect();
     const px = (x/W)*wrapRect.width;
@@ -815,21 +1100,21 @@ function fillStats(){
   if(!todayRec) todayRec = days[Math.floor(days.length/2)];
 
   const box=document.getElementById("stats");
-  function fmtDate(iso){return new Date(iso+"T00:00:00Z").toLocaleDateString("en",{month:"short",day:"numeric",timeZone:"UTC"})}
-  const todayLabel = sameYear ? `Today (${fmtDate(todayRec.date)})` : `Mid-year (${fmtDate(todayRec.date)})`;
+  function fmtDate(iso){return new Date(iso+"T00:00:00Z").toLocaleDateString(L(),{month:"short",day:"numeric",timeZone:"UTC"})}
+  const todayLabel = sameYear ? `${t("today")} (${fmtDate(todayRec.date)})` : `${t("midYear")} (${fmtDate(todayRec.date)})`;
   box.innerHTML=`
     <div class="stat"><div class="k">${todayLabel}</div>
       <div class="v">${fmt(todayRec.sunrise)} → ${fmt(todayRec.sunset)}</div>
-      <div class="k" style="margin-top:4px">${fmtDur(todayRec.daylight)} of daylight</div></div>
-    <div class="stat"><div class="k">Longest day · ${fmtDate(max.date)}</div>
+      <div class="k" style="margin-top:4px">${fmtDur(todayRec.daylight)} ${t("ofDaylight")}</div></div>
+    <div class="stat"><div class="k">${t("longestDay")} · ${fmtDate(max.date)}</div>
       <div class="v">${fmtDur(max.daylight)}</div>
       <div class="k" style="margin-top:4px">${fmt(max.sunrise)} → ${fmt(max.sunset)}</div></div>
-    <div class="stat"><div class="k">Shortest day · ${fmtDate(min.date)}</div>
+    <div class="stat"><div class="k">${t("shortestDay")} · ${fmtDate(min.date)}</div>
       <div class="v">${fmtDur(min.daylight)}</div>
       <div class="k" style="margin-top:4px">${fmt(min.sunrise)} → ${fmt(min.sunset)}</div></div>
-    <div class="stat"><div class="k">Daylight swing</div>
+    <div class="stat"><div class="k">${t("daylightSwing")}</div>
       <div class="v">${fmtDur((max.daylight||0)-(min.daylight||0))}</div>
-      <div class="k" style="margin-top:4px">between solstices</div></div>
+      <div class="k" style="margin-top:4px">${t("betweenSolstices")}</div></div>
   `;
 }
 
@@ -861,12 +1146,12 @@ function updateHeader(){
   const off = STATE.days ? STATE.days[Math.floor(STATE.days.length/2)].tzOffset : 0;
   const sub=document.getElementById("locSub");
   const offStr = (off>=0?"+":"")+off;
-  sub.innerHTML = `<b>${STATE.label}</b> · ${STATE.lat.toFixed(3)}°, ${STATE.lon.toFixed(3)}° · ${STATE.tz} (UTC${offStr}) · Year <b>${STATE.year}</b>`;
+  sub.innerHTML = `<b>${STATE.label}</b> · ${STATE.lat.toFixed(3)}°, ${STATE.lon.toFixed(3)}° · ${STATE.tz} (UTC${offStr}) · ${t("year")} <b>${STATE.year}</b>`;
   document.getElementById("yearLabel").textContent = STATE.year;
 }
 
 function recompute(){
-  setStatus("Computing sun positions…");
+  setStatus(t("statusComputing"));
   // Defer so status paints
   setTimeout(()=>{
     try{
@@ -877,7 +1162,7 @@ function recompute(){
       setStatus("");
     } catch(e){
       console.error(e);
-      setStatus("Couldn't compute: "+e.message, true);
+      setStatus(t("statusCouldntCompute")+e.message, true);
     }
   },10);
 }
@@ -896,7 +1181,7 @@ input.addEventListener("input", ()=>{
       const results = await geocode(q);
       currentResults=results; activeIdx=-1;
       renderSuggestions(results);
-    }catch(e){ setStatus("Search failed: "+e.message, true); }
+    }catch(e){ setStatus(t("statusSearchFailed")+e.message, true); }
   }, 280);
 });
 input.addEventListener("keydown", e=>{
@@ -971,8 +1256,8 @@ async function tzForCoords(lat, lon){
 
 /* --- Geolocation button --- */
 document.getElementById("geoBtn").addEventListener("click",()=>{
-  if(!navigator.geolocation){ setStatus("Geolocation not supported by this browser.", true); return; }
-  setStatus("Asking for your location…");
+  if(!navigator.geolocation){ setStatus(t("statusGeoUnsupported"), true); return; }
+  setStatus(t("statusAskingLocation"));
   navigator.geolocation.getCurrentPosition(async pos=>{
     const {latitude,longitude}=pos.coords;
     let label = `${latitude.toFixed(3)}°, ${longitude.toFixed(3)}°`;
@@ -985,7 +1270,7 @@ document.getElementById("geoBtn").addEventListener("click",()=>{
     STATE.tz = await tzForCoords(latitude, longitude);
     recompute();
   }, err=>{
-    setStatus("Couldn't get location: "+err.message, true);
+    setStatus(t("statusCouldntGetLocation")+err.message, true);
   }, { enableHighAccuracy:false, timeout:10000, maximumAge:300000 });
 });
 
@@ -1003,8 +1288,19 @@ document.querySelectorAll("[data-mode]").forEach(b=>{
   });
 });
 
+/* --- Language menu wiring --- */
+document.getElementById("langBtn").addEventListener("click",(e)=>{
+  e.stopPropagation();
+  document.getElementById("langMenu").classList.toggle("open");
+});
+document.addEventListener("click",(e)=>{
+  if(!e.target.closest(".lang-wrap")) document.getElementById("langMenu").classList.remove("open");
+});
+
 /* --- Initial: set correct tz for default Oslo, then try geolocation --- */
 async function init(){
+  applyI18nDOM();
+  buildLangMenu();
   input.value = STATE.label;
   STATE.tz = await tzForCoords(STATE.lat, STATE.lon);
   recompute();
