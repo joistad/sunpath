@@ -554,11 +554,23 @@ function buildLangMenu(){
   });
 }
 
-function setLang(code){
+async function setLang(code){
   if(!LANGS[code]) return;
   LANG = code;
   applyI18nDOM();
   buildLangMenu();
+  // Re-fetch the current location label in the new language so names
+  // like Oslo / Tokyo come back in the right script.
+  if(STATE && typeof STATE.lat === "number" && typeof STATE.lon === "number"){
+    try{
+      const rev = await reverseGeocode(STATE.lat, STATE.lon);
+      if(rev && rev.display_name){
+        STATE.label = rev.display_name;
+        const inputEl = document.getElementById("locInput");
+        if(inputEl) inputEl.value = rev.display_name;
+      }
+    }catch(e){ /* non-fatal */ }
+  }
   // Re-render everything that contains localized dynamic text
   if(STATE && STATE.days){
     updateHeader();
@@ -1123,15 +1135,24 @@ function fillStats(){
    ========================================================================= */
 const NOMINATIM = "https://nominatim.openstreetmap.org";
 
+/* Build an Accept-Language header that prefers the UI language
+   but falls back to English so we never get unfamiliar scripts
+   (e.g. “Trondheim” shouldn't become トロンハイム). */
+function acceptLang(){
+  const loc = (LANGS[LANG] && LANGS[LANG].locale) || "en";
+  if(LANG === "en") return "en;q=1.0";
+  return `${loc},${LANG};q=0.9,en;q=0.8`;
+}
+
 async function geocode(query){
   const url = `${NOMINATIM}/search?format=json&limit=5&q=${encodeURIComponent(query)}`;
-  const r = await fetch(url, { headers: { "Accept": "application/json" } });
+  const r = await fetch(url, { headers: { "Accept": "application/json", "Accept-Language": acceptLang() } });
   if(!r.ok) throw new Error("geocode failed");
   return r.json();
 }
 async function reverseGeocode(lat, lon){
   const url = `${NOMINATIM}/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`;
-  const r = await fetch(url);
+  const r = await fetch(url, { headers: { "Accept-Language": acceptLang() } });
   if(!r.ok) throw new Error("reverse geocode failed");
   return r.json();
 }
