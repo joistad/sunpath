@@ -496,10 +496,42 @@ const I18N = {
   },
 };
 
+/* --- Persisted user language choice -------------------------------
+   We treat "user picked a language" as sticky: once the user opens the
+   flag menu and chooses one, we never auto-switch again on this device.
+   Best-effort persistence via localStorage; falls back to in-memory only
+   when storage is unavailable (sandboxed preview iframes block it). */
+const LANG_STORAGE_KEY = "sunpath.lang.v1";
+let LANG_USER_PICKED = false;
+
+function loadPersistedLang(){
+  try{
+    const v = localStorage.getItem(LANG_STORAGE_KEY);
+    if(v && LANGS && LANGS[v]) return v;
+  }catch(e){ /* storage unavailable */ }
+  return null;
+}
+function persistLang(code){
+  try{ localStorage.setItem(LANG_STORAGE_KEY, code); }catch(e){}
+}
+
 function detectLang(){
+  const stored = loadPersistedLang();
+  if(stored){ LANG_USER_PICKED = true; return stored; }
   const tag = (navigator.language || "en").toLowerCase();
   if(tag.startsWith("ja")) return "ja";
   if(tag.startsWith("nb")||tag.startsWith("no")||tag.startsWith("nn")) return "nb";
+  return "en";
+}
+
+/* Map ISO-3166 alpha-2 country codes to a supported app language.
+   Returns null when the country has no dedicated translation — caller
+   should leave the current language unchanged in that case. */
+function langFromCountry(cc){
+  if(!cc) return null;
+  const c = String(cc).toLowerCase();
+  if(c === "jp") return "ja";
+  if(c === "no" || c === "sj") return "nb"; // Norway + Svalbard/Jan Mayen
   return "en";
 }
 
@@ -554,9 +586,14 @@ function buildLangMenu(){
   });
 }
 
-async function setLang(code){
+async function setLang(code, opts){
   if(!LANGS[code]) return;
+  const manual = !opts || opts.manual !== false; // default: manual choice
   LANG = code;
+  if(manual){
+    LANG_USER_PICKED = true;
+    persistLang(code);
+  }
   applyI18nDOM();
   buildLangMenu();
   // Re-fetch the current location label in the new language so names
@@ -1329,13 +1366,23 @@ async function init(){
     navigator.geolocation.getCurrentPosition(async pos=>{
       const {latitude,longitude}=pos.coords;
       let label = `${latitude.toFixed(3)}°, ${longitude.toFixed(3)}°`;
+      let countryCode = null;
       try{
         const r = await reverseGeocode(latitude, longitude);
         if(r && r.display_name) label = r.display_name.split(",").slice(0,2).join(", ");
+        if(r && r.address && r.address.country_code) countryCode = r.address.country_code;
         input.value = label;
       }catch(e){}
       STATE.lat=latitude; STATE.lon=longitude; STATE.label=label;
       STATE.tz = await tzForCoords(latitude, longitude);
+      // Auto-pick language from country for first-time visitors only.
+      if(!LANG_USER_PICKED){
+        const auto = langFromCountry(countryCode);
+        if(auto && auto !== LANG){
+          await setLang(auto, { manual: false });
+          return; // setLang already re-rendered everything
+        }
+      }
       recompute();
     }, ()=>{ /* denied or failed – stick with Oslo */ },
     { enableHighAccuracy:false, timeout:8000, maximumAge:600000 });
