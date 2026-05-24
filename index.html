@@ -165,7 +165,19 @@
   .btn.active{background:var(--btn-active-bg);border-color:var(--btn-active-border)}
   .btn svg{width:15px;height:15px}
   .btn.icon-only{padding:7px 9px}
-  .btn.flag{font-size:16px;line-height:1;padding:6px 10px;position:relative}
+  .btn.flag{font-size:16px;line-height:1;padding:6px 8px;position:relative}
+
+  /* Inline SVG flags — used everywhere a flag appears so Windows etc.
+     don't fall back to bare "GB" / "NO" / "JP" text. */
+  .flag-svg{display:inline-flex;align-items:center;vertical-align:middle}
+  .btn.flag .flag-svg{width:22px;height:14px}
+  .flag-svg svg{
+    width:100%;height:100%;display:block;
+    border-radius:2px;
+    box-shadow:0 0 0 1px rgba(0,0,0,0.12);
+  }
+  [data-theme="dark"] .flag-svg svg{ box-shadow:0 0 0 1px rgba(255,255,255,0.18); }
+  .lang-menu .item .flag-svg{width:22px;height:14px;flex-shrink:0}
 
   /* Attention pulse on the language button for first-time visitors.
      The button itself sits above an absolutely-positioned ::before ring
@@ -331,9 +343,9 @@
    I18N
    ========================================================================= */
 const LANGS = {
-  en: { label: "English",  flag: "🇬🇧", locale: "en-GB" },
-  nb: { label: "Norsk",    flag: "🇳🇴", locale: "nb-NO" },
-  ja: { label: "日本語",    flag: "🇯🇵", locale: "ja-JP" },
+  en: { label: "English",  flag: "🇬🇧", code: "GB", locale: "en-GB" },
+  nb: { label: "Norsk",    flag: "🇳🇴", code: "NO", locale: "nb-NO" },
+  ja: { label: "日本語",    flag: "🇯🇵", code: "JP", locale: "ja-JP" },
 };
 
 const I18N = {
@@ -562,6 +574,36 @@ let LANG = detectLang();
 function t(key){ return (I18N[LANG] && I18N[LANG][key]) || I18N.en[key] || key; }
 function L(){ return LANGS[LANG].locale; }
 
+/* --- Flag rendering -------------------------------------------------
+   Windows (and some Linux distros) don't ship flag-emoji glyphs, so a
+   plain 🇬🇧 falls back to the bare "GB" letter pair. We always render
+   inline SVG flags instead — same look on every platform, crisp at any
+   size, and the file weight is negligible. */
+const FLAG_SVGS = {
+  GB: `<svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+    <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+    <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4"/>
+    <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+    <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
+  </svg>`,
+  NO: `<svg viewBox="0 0 22 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect width="22" height="16" fill="#BA0C2F"/>
+    <rect x="6" width="2" height="16" fill="#fff"/>
+    <rect y="7" width="22" height="2" fill="#fff"/>
+    <rect x="6.5" width="1" height="16" fill="#00205B"/>
+    <rect y="7.5" width="22" height="1" fill="#00205B"/>
+  </svg>`,
+  JP: `<svg viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect width="30" height="20" fill="#fff"/>
+    <circle cx="15" cy="10" r="6" fill="#BC002D"/>
+  </svg>`,
+};
+function flagMarkup(langCode){
+  const cc = (LANGS[langCode] && LANGS[langCode].code) || "GB";
+  return `<span class="flag-svg" role="img" aria-label="${LANGS[langCode] ? LANGS[langCode].label : cc}">${FLAG_SVGS[cc] || ""}</span>`;
+}
+
 function applyI18nDOM(){
   document.documentElement.lang = L().split("-")[0];
   document.title = "Sunpath — " + t("tagline");
@@ -586,10 +628,10 @@ function applyI18nDOM(){
     const cur = document.documentElement.getAttribute("data-theme");
     themeBtn.title = cur === "light" ? t("themeToDark") : t("themeToLight");
   }
-  // Language button shows current flag
+  // Language button shows current flag (SVG if emoji flags aren't supported)
   const langBtn = document.getElementById("langBtn");
   if(langBtn){
-    langBtn.textContent = LANGS[LANG].flag;
+    langBtn.innerHTML = flagMarkup(LANG);
     langBtn.title = t("language");
   }
 }
@@ -598,7 +640,7 @@ function buildLangMenu(){
   const menu = document.getElementById("langMenu");
   menu.innerHTML = Object.entries(LANGS).map(([code, info])=>
     `<div class="item${code===LANG?" active":""}" data-lang="${code}">
-      <span class="fl">${info.flag}</span><span>${info.label}</span>
+      <span class="fl">${flagMarkup(code)}</span><span>${info.label}</span>
     </div>`
   ).join("");
   menu.querySelectorAll(".item").forEach(el=>{
