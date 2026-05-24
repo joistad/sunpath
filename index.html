@@ -262,13 +262,13 @@
       <div class="sub" id="locSub" data-i18n="loadingLocation">Loading your location…</div>
     </div>
     <div class="controls">
-      <button class="btn active" data-mode="clock">
-        <span data-i18n="clockView">Clock view</span>
-        <span class="info" tabindex="0" data-i18n-tip="tipClockView">i</span>
-      </button>
-      <button class="btn" data-mode="daylight">
+      <button class="btn active" data-mode="daylight">
         <span data-i18n="daylightHours">Daylight hours</span>
         <span class="info" tabindex="0" data-i18n-tip="tipDaylightHours">i</span>
+      </button>
+      <button class="btn" data-mode="clock">
+        <span data-i18n="clockView">Clock view</span>
+        <span class="info" tabindex="0" data-i18n-tip="tipClockView">i</span>
       </button>
       <div class="lang-wrap">
         <button class="btn flag" id="langBtn" aria-label="Language" title="Language"></button>
@@ -817,7 +817,7 @@ const STATE = {
   label: "Oslo, Norway",
   tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   year: new Date().getFullYear(),
-  mode: "clock",
+  mode: "daylight",
   days: null,
 };
 
