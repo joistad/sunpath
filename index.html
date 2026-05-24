@@ -165,7 +165,30 @@
   .btn.active{background:var(--btn-active-bg);border-color:var(--btn-active-border)}
   .btn svg{width:15px;height:15px}
   .btn.icon-only{padding:7px 9px}
-  .btn.flag{font-size:16px;line-height:1;padding:6px 10px}
+  .btn.flag{font-size:16px;line-height:1;padding:6px 10px;position:relative}
+
+  /* Attention pulse on the language button for first-time visitors.
+     The button itself sits above an absolutely-positioned ::before ring
+     so the glow can grow outside the button without clipping. */
+  @keyframes sunpath-lang-pulse{
+    0%   { box-shadow: 0 0 0 0   var(--glow-color, rgba(255,180,90,0.55)); }
+    70%  { box-shadow: 0 0 0 12px rgba(255,180,90,0.0);  }
+    100% { box-shadow: 0 0 0 0   rgba(255,180,90,0.0);  }
+  }
+  @keyframes sunpath-lang-bob{
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-1.5px); }
+  }
+  .btn.flag.glow{
+    --glow-color: rgba(255,180,90,0.55);
+    animation: sunpath-lang-pulse 1.8s ease-out 0s 4, sunpath-lang-bob 1.8s ease-in-out 0s 4;
+  }
+  [data-theme="light"] .btn.flag.glow{
+    --glow-color: rgba(230,140,40,0.55);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .btn.flag.glow{ animation: none; outline: 2px solid rgba(255,180,90,0.7); outline-offset: 2px; }
+  }
 
   /* Language menu */
   .lang-wrap{position:relative}
@@ -777,11 +800,49 @@ function updateLegendSwatches(){
   document.getElementById("sw-ss-wrap").style.color = cssVar("--sunset-color");
   document.getElementById("sw-noon-wrap").style.color = cssVar("--noon-color");
 }
-const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
-applyTheme(prefersLight ? "light" : "dark");
+/* --- Persisted theme choice -----------------------------------------
+   Same pattern as the language preference: device setting is the
+   default, OS-level changes propagate live, and a manual click sticks
+   forever (best-effort localStorage, in-memory flag as fallback). */
+const THEME_STORAGE_KEY = "sunpath.theme.v1";
+let THEME_USER_PICKED = false;
+
+function loadPersistedTheme(){
+  try{
+    const v = localStorage.getItem(THEME_STORAGE_KEY);
+    if(v === "light" || v === "dark") return v;
+  }catch(e){}
+  return null;
+}
+function persistTheme(theme){
+  try{ localStorage.setItem(THEME_STORAGE_KEY, theme); }catch(e){}
+}
+function systemTheme(){
+  return (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+}
+
+const storedTheme = loadPersistedTheme();
+if(storedTheme){
+  THEME_USER_PICKED = true;
+  applyTheme(storedTheme);
+} else {
+  applyTheme(systemTheme());
+}
+
+/* Live-follow OS theme changes only while the user hasn't explicitly chosen. */
+if(window.matchMedia){
+  const mq = window.matchMedia("(prefers-color-scheme: light)");
+  const onChange = e => { if(!THEME_USER_PICKED) applyTheme(e.matches ? "light" : "dark"); };
+  if(mq.addEventListener) mq.addEventListener("change", onChange);
+  else if(mq.addListener) mq.addListener(onChange); // Safari < 14 fallback
+}
+
 document.getElementById("themeBtn").addEventListener("click",()=>{
   const cur=document.documentElement.getAttribute("data-theme");
-  applyTheme(cur==="light" ? "dark" : "light");
+  const next = cur==="light" ? "dark" : "light";
+  THEME_USER_PICKED = true;
+  persistTheme(next);
+  applyTheme(next);
 });
 
 /* =========================================================================
@@ -1347,13 +1408,33 @@ document.querySelectorAll("[data-mode]").forEach(b=>{
 });
 
 /* --- Language menu wiring --- */
+function stopLangGlow(){
+  const b = document.getElementById("langBtn");
+  if(b) b.classList.remove("glow");
+}
 document.getElementById("langBtn").addEventListener("click",(e)=>{
   e.stopPropagation();
+  stopLangGlow();
   document.getElementById("langMenu").classList.toggle("open");
 });
+document.getElementById("langBtn").addEventListener("mouseenter", stopLangGlow, { once: true });
+document.getElementById("langBtn").addEventListener("focus",      stopLangGlow, { once: true });
 document.addEventListener("click",(e)=>{
   if(!e.target.closest(".lang-wrap")) document.getElementById("langMenu").classList.remove("open");
 });
+
+/* Show a brief attention pulse on the flag button for first-time visitors.
+   Anyone who has already picked a language (LANG_USER_PICKED=true) has
+   seen the menu and doesn't need the hint. */
+if(!LANG_USER_PICKED){
+  const langBtnEl = document.getElementById("langBtn");
+  if(langBtnEl){
+    // Tiny delay so the button has painted before the animation kicks in.
+    setTimeout(()=> langBtnEl.classList.add("glow"), 600);
+    // The keyframes run 4 times ≈ 7.2s; clear the class shortly after.
+    setTimeout(stopLangGlow, 8000);
+  }
+}
 
 /* --- Initial: set correct tz for default Oslo, then try geolocation --- */
 async function init(){
